@@ -27,7 +27,7 @@ if (!(Test-Path .env)) {
 }
 if ($Setup) {
   Run uv @('python','install','3.12')
-  Run uv @('sync','--managed-python','--python','3.12','--locked')
+  Run uv @('sync','--python','3.12','--locked')
   Push-Location frontend
   try { Run npm.cmd @('ci') } finally { Pop-Location }
 }
