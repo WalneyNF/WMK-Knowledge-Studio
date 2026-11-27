@@ -7,8 +7,8 @@ Git, uv, Node.js 22 LTS, SurrealDB CLI 2.x no PATH (não 3.x), espaço para depe
 
 ## Primeiro teste
 ```powershell
-git clone -b wmk/windows-native https://github.com/WalneyNF/open-notebook.git WMK-Notebook
-cd WMK-Notebook
+git clone -b wmk/windows-native https://github.com/WalneyNF/WMK-Knowledge-Studio.git
+cd WMK-Knowledge-Studio
 powershell -NoProfile -ExecutionPolicy Bypass -File .\windows.ps1 -Setup
 ```
 Após instalação, use o mesmo comando sem -Setup. Encerre com Ctrl+C. Logs em wmk-logs. Não compartilhe logs sem revisar dados privados. Preserve .env e surreal_data. O launcher exige portas 8000, 5055 e 3000 livres e usa loopback. Não publique na rede.
