@@ -1,4 +1,4 @@
-param([switch]$Setup)
+param([switch]$Setup, [switch]$SmokeTest)
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
 function Check($name) { if (!(Get-Command $name -ErrorAction SilentlyContinue)) { throw "Dependencia ausente: $name. Consulte WMK-WINDOWS.md." } }
@@ -40,6 +40,7 @@ $env:SURREAL_PASS=$c.SURREAL_PASSWORD
 $env:API_HOST='127.0.0.1'
 $env:API_PORT='5055'
 $env:API_RELOAD='false'
+$env:CORS_ORIGINS='http://127.0.0.1:3000,http://localhost:3000'
 $env:OPEN_NOTEBOOK_WORKER_MAX_TASKS='1'
 $env:API_URL='http://127.0.0.1:5055'
 $env:INTERNAL_API_URL=$env:API_URL
@@ -69,6 +70,11 @@ try {
   Wait-Http 'http://127.0.0.1:3000' $front frontend
   if ($worker.HasExited) { throw 'Worker encerrou. Consulte wmk-logs.' }
   Write-Host 'Interface HTTP disponivel. Teste importacao e chat antes de considerar homologado.'
+  if ($SmokeTest) {
+    $null = Invoke-RestMethod 'http://127.0.0.1:5055/openapi.json' -TimeoutSec 15
+    Write-Host 'SMOKE PASS: DB, API e frontend responderam; worker vivo. Chat/RAG ainda nao testados.'
+    return
+  }
   Start-Process 'http://127.0.0.1:3000'
   while ($true) {
     foreach ($p in $children) { if ($p.HasExited) { throw "Processo $($p.Id) encerrou. Consulte wmk-logs." } }
