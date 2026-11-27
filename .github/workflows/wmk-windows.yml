@@ -1,0 +1,28 @@
+name: WMK Windows checks
+on:
+  push:
+    branches: [wmk/windows-native]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  launcher-validation:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate PowerShell syntax
+        shell: powershell
+        run: |
+          $tokens = $null
+          $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'windows.ps1'), [ref]$tokens, [ref]$errors)
+          if ($errors.Count -gt 0) { $errors | Format-List; exit 1 }
+          Write-Host 'PowerShell syntax OK'
+      - name: Verify distribution files
+        shell: powershell
+        run: |
+          foreach ($file in 'INSTALAR.bat','INICIAR.bat','TESTAR.bat','DIAGNOSTICO.bat','WMK-WINDOWS.md','laboratorio/projeto-ficticio.md','uv.lock','frontend/package-lock.json') {
+            if (!(Test-Path $file)) { throw "Missing: $file" }
+          }
+          Write-Host 'Distribution files OK. Runtime not tested.'
