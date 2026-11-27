@@ -1,7 +1,9 @@
 param([switch]$Setup, [switch]$SmokeTest)
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
-$env:UV_PYTHON_PREFERENCE = 'only-managed'
+Remove-Item Env:UV_PYTHON_PREFERENCE -ErrorAction SilentlyContinue
+Remove-Item Env:UV_MANAGED_PYTHON -ErrorAction SilentlyContinue
+Write-Host 'WMK Launcher - revision 2026-11-27-R4'
 function Check($name) { if (!(Get-Command $name -ErrorAction SilentlyContinue)) { throw "Dependencia ausente: $name. Consulte WMK-WINDOWS.md." } }
 function Run($exe, $arguments) { & $exe @arguments; if ($LASTEXITCODE -ne 0) { throw "$exe falhou: $LASTEXITCODE" } }
 Check uv
@@ -26,8 +28,9 @@ if (!(Test-Path .env)) {
   [IO.File]::WriteAllText((Join-Path $PWD '.env'),$config)
 }
 if ($Setup) {
-  Run uv @('python','install','3.12')
-  Run uv @('sync','--python','3.12','--locked')
+  $pythonExe = (& uv python find --managed-python 3.12 | Select-Object -Last 1)
+  if ($LASTEXITCODE -ne 0 -or !$pythonExe -or !(Test-Path $pythonExe)) { throw 'Python 3.12 gerenciado nao localizado.' }
+  Run uv @('sync','--python',$pythonExe,'--locked')
   Push-Location frontend
   try { Run npm.cmd @('ci') } finally { Pop-Location }
 }
