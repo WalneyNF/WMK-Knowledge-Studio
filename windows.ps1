@@ -1,6 +1,7 @@
 param([switch]$Setup, [switch]$SmokeTest)
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
+$env:UV_PYTHON_PREFERENCE = 'only-managed'
 function Check($name) { if (!(Get-Command $name -ErrorAction SilentlyContinue)) { throw "Dependencia ausente: $name. Consulte WMK-WINDOWS.md." } }
 function Run($exe, $arguments) { & $exe @arguments; if ($LASTEXITCODE -ne 0) { throw "$exe falhou: $LASTEXITCODE" } }
 Check uv
@@ -25,7 +26,8 @@ if (!(Test-Path .env)) {
   [IO.File]::WriteAllText((Join-Path $PWD '.env'),$config)
 }
 if ($Setup) {
-  Run uv @('sync','--python','3.12','--locked')
+  Run uv @('python','install','3.12')
+  Run uv @('sync','--managed-python','--python','3.12','--locked')
   Push-Location frontend
   try { Run npm.cmd @('ci') } finally { Pop-Location }
 }
