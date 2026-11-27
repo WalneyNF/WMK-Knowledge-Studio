@@ -6,9 +6,15 @@ function Run($exe, $arguments) { & $exe @arguments; if ($LASTEXITCODE -ne 0) { t
 Check uv
 Check node
 Check npm.cmd
-Check surreal
+$surrealCommand = Get-Command surreal -ErrorAction SilentlyContinue
+if ($surrealCommand) {
+  $surrealExe = $surrealCommand.Source
+} else {
+  $surrealExe = 'D:\Ferramentas\surrealdb\surreal-v2.7.0.windows-amd64.exe'
+  if (!(Test-Path $surrealExe)) { throw 'SurrealDB nao localizado. Consulte WMK-WINDOWS.md.' }
+}
 if ([version]((node --version).TrimStart('v')) -lt [version]'20.9') { throw 'Node >= 20.9 necessario' }
-$sv = (& surreal version | Out-String)
+$sv = (& $surrealExe version | Out-String)
 if ($sv -notmatch '\b2\.\d+\.\d+') { throw 'Use SurrealDB 2.x, como no docker-compose original.' }
 if (!(Test-Path .env)) {
   $bytes = New-Object byte[] 32
@@ -61,7 +67,7 @@ function Wait-Http($url,$p,$name) {
   throw "$name nao respondeu: $url"
 }
 try {
-  $db = Start-ServiceProcess db (Get-Command surreal).Source @('start','--bind','127.0.0.1:8000','--log','info','rocksdb:surreal_data/notebook.db') $PSScriptRoot
+  $db = Start-ServiceProcess db $surrealExe @('start','--bind','127.0.0.1:8000','--log','info','rocksdb:surreal_data/notebook.db') $PSScriptRoot
   Wait-Http 'http://127.0.0.1:8000/health' $db db
   $api = Start-ServiceProcess api (Get-Command uv).Source @('run','--no-sync','--env-file','.env','run_api.py') $PSScriptRoot
   Wait-Http 'http://127.0.0.1:5055/docs' $api api
